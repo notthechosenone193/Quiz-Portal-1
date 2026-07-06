@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Quiz {
+  id            Int           @id @default(autoincrement())
+  title         String
+  topic         String
+  timer_seconds Int           @default(15)
+  theme         String        @default("")
+  created_at    DateTime      @default(now())
+  is_published  Int           @default(0)
+  questions     Question[]
+  sessions      QuizSession[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id             Int      @id @default(autoincrement())
+  quiz_id        Int
+  type           String
+  text           String
+  options        String   @default("[]")
+  correct_answer String
+  order_num      Int      @default(0)
+  quiz           Quiz     @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  answers        Answer[]
+
+  @@map("questions")
+}
+
+model QuizSession {
+  id           Int           @id @default(autoincrement())
+  quiz_id      Int
+  session_code String        @unique
+  is_active    Int           @default(1)
+  created_at   DateTime      @default(now())
+  quiz         Quiz          @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  participants Participant[]
+
+  @@map("quiz_sessions")
+}
+
+model Participant {
+  id         Int         @id @default(autoincrement())
+  session_id Int
+  name       String
+  joined_at  DateTime    @default(now())
+  session    QuizSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  answers    Answer[]
+
+  @@map("participants")
+}
+
+model Answer {
+  id              Int         @id @default(autoincrement())
+  participant_id  Int
+  question_id     Int
+  selected_answer String?
+  time_taken_ms   Int         @default(0)
+  is_correct      Int?
+  admin_override  Int?
+  participant     Participant @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  question        Question    @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([participant_id, question_id])
+  @@map("answers")
+}
+
+model TambolaGame {
+  id             Int              @id @default(autoincrement())
+  title          String
+  host_name      String           @default("")
+  win_conditions String           @default("[]")
+  created_at     DateTime         @default(now())
+  is_active      Int              @default(1)
+  sessions       TambolaSession[]
+
+  @@map("tambola_games")
+}
+
+model TambolaSession {
+  id            Int                  @id @default(autoincrement())
+  game_id       Int
+  session_code  String               @unique
+  created_at    DateTime             @default(now())
+  game          TambolaGame          @relation(fields: [game_id], references: [id], onDelete: Cascade)
+  tickets       TambolaTicket[]
+  drawn_numbers TambolaDrawnNumber[]
+
+  @@map("tambola_sessions")
+}
+
+model TambolaTicket {
+  id               Int            @id @default(autoincrement())
+  session_id       Int
+  participant_name String
+  grid             String         @default("[]")
+  joined_at        DateTime       @default(now())
+  session          TambolaSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  claims           TambolaClaim[]
+
+  @@map("tambola_tickets")
+}
+
+model TambolaDrawnNumber {
+  id         Int            @id @default(autoincrement())
+  session_id Int
+  number     Int
+  drawn_at   DateTime       @default(now())
+  session    TambolaSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@unique([session_id, number])
+  @@map("tambola_drawn_numbers")
+}
+
+model TambolaClaim {
+  id         Int           @id @default(autoincrement())
+  ticket_id  Int
+  claim_type String
+  claimed_at DateTime      @default(now())
+  verified   Int?
+  ticket     TambolaTicket @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+
+  @@unique([ticket_id, claim_type])
+  @@map("tambola_claims")
+}

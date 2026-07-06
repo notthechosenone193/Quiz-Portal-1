@@ -1,0 +1,991 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 resolves utility classes (bg-primary, border-outline-variant, shadow-elevation-2, etc.)
+ * from an @theme block, not from tailwind.config.ts and not from plain :root custom properties.
+ * This block is the single bridge between the TELUS token values below and the Tailwind utilities
+ * that components/ui/*.tsx already reference. Values are aliased from the raw TELUS tokens in :root
+ * further down this file so there is exactly one authored hex value per color.
+ */
+@theme {
+  --color-primary: var(--color-telus-purple);
+  --color-on-primary: var(--color-white);
+  --color-primary-container: var(--color-purple-100);
+  --color-secondary: var(--color-accessible-green);
+  --color-on-secondary: var(--color-white);
+  --color-secondary-container: var(--color-green-100);
+  --color-tertiary: var(--color-telus-purple);
+
+  --color-success: #2B8000;
+  --color-error: #C12335;
+  --color-warning: #8C5415;
+
+  --color-surface: var(--color-white);
+  --color-surface-dim: var(--color-grey-athens);
+  --color-outline: var(--color-grey-gainsboro);
+  --color-outline-variant: var(--color-grey-athens);
+  --color-on-surface: var(--color-grey-shark);
+
+  --shadow-elevation-0: none;
+  --shadow-elevation-1: var(--shadow-sm);
+  --shadow-elevation-2: var(--shadow-md);
+  --shadow-elevation-3: var(--shadow-lg);
+  --shadow-elevation-5: var(--shadow-xl);
+
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1rem;
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.25rem;
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.5rem;
+  --text-title-lg: 1.375rem;
+  --text-title-lg--line-height: 1.75rem;
+}
+
+/* ==================== TELUS DESIGN SYSTEM — OFFICIAL TOKENS ==================== */
+
+:root {
+  /* === BRAND COLORS === */
+  --color-telus-purple:      #4B286D;
+  --color-purple-vivid:      #6E2E8E;
+  --color-purple-200:        #E0D6E9;
+  --color-purple-100:        #F2EFF4;
+
+  --color-accessible-green:  #2B8000;
+  --color-telus-green:       #66CC00; /* decorative only — do NOT use on text */
+  --color-green-100:         #F4F9F2;
+
+  /* === GREY SCALE === */
+  --color-grey-shark:        #2A2C2E;
+  --color-grey-shuttle:      #54595F;
+  --color-grey-raven:        #71757B;
+  --color-grey-gainsboro:    #D8D8D8;
+  --color-grey-athens:       #F7F7F8;
+  --color-white:             #FFFFFF;
+
+  /* === FUNCTIONAL SURFACES ===
+     (--color-primary/-secondary/-success/-error/-warning/-surface/-outline/-on-surface
+     are defined in the @theme block above — this is the single source of truth for them) */
+  --color-error-surface:     #FFF6F8;
+  --color-warning-accent:    #FACA69;
+  --color-warning-surface:   #FFF9EE;
+  --color-success-surface:   #F4F9F2;
+  --color-info:              #4B286D;
+  --color-info-surface:      #F2EFF4;
+
+  /* === OTHER SEMANTIC ALIASES (not Tailwind utility names, referenced via var() directly) === */
+  --color-bg-page:           var(--color-white);
+  --color-bg-subtle:         var(--color-grey-athens);
+  --color-text-primary:      var(--color-grey-shark);
+  --color-text-secondary:    var(--color-grey-shuttle);
+  --color-border-default:    var(--color-grey-gainsboro);
+  --color-border-focus:      var(--color-telus-purple);
+  --color-border-error:      var(--color-error);
+
+  /* === SPACING (4px base) === */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+  --space-10: 128px;
+
+  /* Legacy aliases */
+  --spacing-xs:  var(--space-1);
+  --spacing-sm:  var(--space-2);
+  --spacing-md:  var(--space-3);
+  --spacing-lg:  var(--space-4);
+  --spacing-xl:  var(--space-5);
+  --spacing-xxl: var(--space-6);
+
+  /* === BORDER RADIUS === */
+  --radius-none: 0;
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   8px;
+  --radius-xl:   16px;
+  --radius-2xl:  28px;
+  --radius-full: 9999px;
+
+  /* === SHADOWS === */
+  --shadow-sm:    0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md:    0 2px 8px rgba(0,0,0,0.12);
+  --shadow-lg:    0 4px 16px rgba(0,0,0,0.14);
+  --shadow-xl:    0 8px 32px rgba(0,0,0,0.16);
+  --shadow-focus: 0 0 0 3px rgba(75,40,109,0.35);
+  /* --shadow-elevation-0/1/2/3/5 (used as both the Tailwind shadow-elevation-* utility and
+     via var() below) are defined once, in the @theme block above. */
+
+  /* === TYPOGRAPHY === */
+  --font-family-base:  'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-family-mono:  'Courier New', Courier, monospace;
+  --font-weight-regular:  400;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --font-size-display:    3rem;     /* 48px */
+  --font-size-h1-desktop: 2.5rem;   /* 40px */
+  --font-size-h2-desktop: 2rem;     /* 32px */
+  --font-size-h3-desktop: 1.75rem;  /* 28px */
+  --font-size-h4:         1.25rem;  /* 20px */
+  --font-size-body:       1rem;     /* 16px */
+  --font-size-small:      0.875rem; /* 14px */
+  --font-size-label:      0.75rem;  /* 12px */
+
+  --line-height-h1-desktop: 3rem;   /* 48px */
+  --line-height-h2-desktop: 2.5rem; /* 40px */
+  --line-height-h3-desktop: 2.25rem;/* 36px */
+  --line-height-body:       1.5rem; /* 24px */
+  --line-height-small:      1.25rem;/* 20px */
+
+  --letter-spacing-label: 0.08em;
+  --text-transform-label: uppercase;
+
+  /* === DIVIDER === */
+  --divider-width-default: 1px;
+  --divider-width-thick:   2px;
+  --divider-color:          var(--color-grey-gainsboro);
+  --divider-color-decorative: var(--color-accessible-green);
+
+  /* === BORDER === */
+  --border-width-thin:   1px;
+  --border-width-medium: 2px;
+
+  /* === TRANSITION === */
+  --transition-default: all 200ms ease;
+
+  /* === GRID === */
+  --grid-max-width: 1200px;
+
+  /* Scrim */
+  --color-scrim: rgba(0, 0, 0, 0.32);
+}
+
+/* Dark Mode (Optional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #5DADE2;
+    --color-on-primary: #001F5C;
+    --color-primary-container: #1565C0;
+    --color-on-primary-container: #E3F2FD;
+
+    --color-secondary: #B39DDB;
+    --color-on-secondary: #2D0052;
+    --color-secondary-container: #6A1B9A;
+    --color-on-secondary-container: #F3E5FF;
+
+    --color-surface: #1C1B1F;
+    --color-on-surface: #FFFBFE;
+    --color-outline: #938F99;
+  }
+}
+
+/* ==================== TYPOGRAPHY SYSTEM ==================== */
+
+html {
+  font-family: var(--font-family-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  font-weight: var(--font-weight-regular);
+}
+
+h1, h2, h3, h4, h5, h6 { margin: 0; }
+
+h1 {
+  font-size: var(--font-size-h1-desktop);
+  line-height: var(--line-height-h1-desktop);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-telus-purple);
+}
+
+h2 {
+  font-size: var(--font-size-h2-desktop);
+  line-height: var(--line-height-h2-desktop);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-telus-purple);
+}
+
+h3 {
+  font-size: var(--font-size-h3-desktop);
+  line-height: var(--line-height-h3-desktop);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+h4, h5, h6 {
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+p {
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-secondary);
+}
+
+.text-label {
+  font-size: var(--font-size-label);
+  line-height: 1rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: var(--text-transform-label);
+  color: var(--color-text-secondary);
+}
+
+.text-body  { font-size: var(--font-size-body);  line-height: var(--line-height-body); }
+.text-small { font-size: var(--font-size-small); line-height: var(--line-height-small); color: var(--color-text-secondary); }
+.text-eyebrow {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+  color: var(--color-accessible-green);
+}
+
+/* ==================== M3 BUTTON COMPONENTS ==================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: 10px 24px;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* Filled Primary Button */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2E8659;
+  box-shadow: var(--shadow-elevation-2);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: #1B5E20;
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Filled Tonal Button */
+.btn-secondary {
+  background-color: var(--color-secondary-container);
+  color: var(--color-secondary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #F3E5F5;
+  box-shadow: var(--shadow-elevation-1);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background-color: #E1BEE7;
+}
+
+/* Outlined Button */
+.btn-outlined {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-outline);
+}
+
+.btn-outlined:hover:not(:disabled) {
+  background-color: rgba(0, 102, 255, 0.04);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-elevation-1);
+}
+
+.btn-outlined:active:not(:disabled) {
+  background-color: rgba(0, 102, 255, 0.08);
+}
+
+/* Text Button */
+.btn-text {
+  background-color: transparent;
+  color: var(--color-primary);
+  padding: 10px 12px;
+}
+
+.btn-text:hover:not(:disabled) {
+  background-color: rgba(0, 102, 255, 0.08);
+}
+
+.btn-text:active:not(:disabled) {
+  background-color: rgba(0, 102, 255, 0.12);
+}
+
+/* ==================== M3 INPUT COMPONENTS ==================== */
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.input-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+  padding: 0 var(--spacing-sm);
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+textarea,
+select {
+  width: 100%;
+  padding: 12px var(--spacing-lg);
+  min-height: 44px;
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  line-height: 24px;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: inherit;
+  transition: all 200ms ease-out;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary), var(--shadow-elevation-1);
+  background-color: var(--color-primary-container);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.input-error {
+  border-color: var(--color-error);
+}
+
+.input-error:focus {
+  box-shadow: inset 0 0 0 1px var(--color-error), var(--shadow-elevation-1);
+}
+
+.input-helper {
+  font-size: 12px;
+  color: var(--color-outline);
+  padding: 0 var(--spacing-sm);
+}
+
+.input-error-text {
+  font-size: 12px;
+  color: var(--color-error);
+  padding: 0 var(--spacing-sm);
+}
+
+/* ==================== M3 CARD COMPONENT ==================== */
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-elevation-1);
+  border: 1px solid var(--color-outline-variant);
+  transition: all 200ms ease-out;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-elevation-2);
+  border-color: var(--color-outline);
+}
+
+.card-elevated {
+  box-shadow: var(--shadow-elevation-3);
+}
+
+/* ==================== M3 CHIP COMPONENT ==================== */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 8px var(--spacing-lg);
+  border-radius: var(--radius-2xl);
+  background-color: var(--color-secondary-container);
+  color: var(--color-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease-out;
+}
+
+.chip:hover {
+  background-color: #F3E5F5;
+}
+
+.chip.selected {
+  background-color: var(--color-secondary);
+  color: var(--color-on-secondary);
+}
+
+/* Success and Error Color Coding for Answers */
+.answer-correct {
+  background-color: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.answer-wrong {
+  background-color: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+/* ==================== M3 ANIMATION HELPERS ==================== */
+
+.animate-in {
+  animation: slideUp 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-success {
+  animation: scaleIn 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-pulse-ring {
+  animation: pulseRing 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==================== QUIZ ENGAGEMENT ANIMATIONS ==================== */
+
+/* Answer Feedback Animations */
+@keyframes checkmarkSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.5);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(8px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes xMarkSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.5);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(8px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Floating Points Animation */
+@keyframes floatingPoints {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.8);
+  }
+}
+
+/* Progress Bar Fill Animation */
+@keyframes progressFill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: var(--progress-width, 100%);
+  }
+}
+
+/* Timer Color Transitions (handled by JS, but smooth transition) */
+@keyframes timerPulse {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.5));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0.3));
+  }
+}
+
+/* Leaderboard Rank Change Animation */
+@keyframes rankSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes rankHighlight {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(43, 128, 0, 0.15);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Confetti Animation */
+@keyframes confettiFall {
+  0% {
+    opacity: 1;
+    transform: translateY(-20px) translateX(0) rotateZ(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(600px) translateX(var(--confetti-x, 0)) rotateZ(720deg);
+  }
+}
+
+/* Scale In Animation */
+@keyframes scaleInBig {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Utility Animation Classes */
+.animate-checkmark {
+  animation: checkmarkSlideIn 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-xmark {
+  animation: xMarkSlideIn 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-floating-points {
+  animation: floatingPoints 500ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-rank-slide {
+  animation: rankSlide 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-rank-highlight {
+  animation: rankHighlight 2s ease-in-out forwards;
+}
+
+.animate-timer-pulse {
+  animation: timerPulse 0.8s ease-in-out infinite;
+}
+
+.animate-confetti {
+  animation: confettiFall 1s ease-in forwards;
+  position: fixed;
+  pointer-events: none;
+}
+
+.animate-scale-in-big {
+  animation: scaleInBig 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ==================== LEADERBOARD ANIMATIONS ==================== */
+
+/* Row entrance animation */
+@keyframes leaderboardRowSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Medal spin animation */
+@keyframes medalSpin {
+  0% {
+    transform: scale(0) rotateZ(-180deg);
+  }
+  70% {
+    transform: scale(1.1) rotateZ(10deg);
+  }
+  100% {
+    transform: scale(1) rotateZ(0deg);
+  }
+}
+
+/* Score counter animation */
+@keyframes scoreCountUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Name fade-in animation */
+@keyframes nameFadeIn {
+  0% {
+    opacity: 0;
+    color: #2B8000;
+  }
+  100% {
+    opacity: 1;
+    color: #1F1F1F;
+  }
+}
+
+/* Top 3 special highlight glow */
+@keyframes topRankGlow {
+  0% {
+    box-shadow: inset 0 0 0 rgba(43, 128, 0, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(43, 128, 0, 0.3);
+  }
+  100% {
+    box-shadow: inset 0 0 0 rgba(43, 128, 0, 0);
+  }
+}
+
+/* Utility classes for leaderboard animations */
+.animate-leaderboard-row {
+  animation: leaderboardRowSlideIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+
+.animate-medal-spin {
+  animation: medalSpin 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-score-counter {
+  animation: scoreCountUp 800ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-name-fade {
+  animation: nameFadeIn 700ms ease-out forwards;
+}
+
+.animate-top-rank-glow {
+  animation: topRankGlow 2s ease-in-out infinite;
+}
+
+/* ==================== BACKGROUND FLARE ANIMATIONS (CONTINUOUS LOOP) ==================== */
+
+/* Continuous flare glow animations */
+@keyframes flareGlow1 {
+  0% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(0.8);
+    filter: blur(50px);
+  }
+  25% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: blur(40px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.5);
+    filter: blur(60px);
+  }
+  75% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: blur(40px);
+  }
+  100% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(0.8);
+    filter: blur(50px);
+  }
+}
+
+@keyframes flareGlow2 {
+  0% {
+    opacity: 0.15;
+    transform: translate(-50%, -50%) scale(0.9);
+    filter: blur(55px);
+  }
+  25% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.3);
+    filter: blur(45px);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1.6);
+    filter: blur(65px);
+  }
+  75% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.3);
+    filter: blur(45px);
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate(-50%, -50%) scale(0.9);
+    filter: blur(55px);
+  }
+}
+
+@keyframes flareGlow3 {
+  0% {
+    opacity: 0.12;
+    transform: translate(-50%, -50%) scale(0.85);
+    filter: blur(48px);
+  }
+  25% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.25);
+    filter: blur(42px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.55);
+    filter: blur(62px);
+  }
+  75% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.25);
+    filter: blur(42px);
+  }
+  100% {
+    opacity: 0.12;
+    transform: translate(-50%, -50%) scale(0.85);
+    filter: blur(48px);
+  }
+}
+
+@keyframes flareGlow4 {
+  0% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(60px);
+  }
+  25% {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(1.35);
+    filter: blur(50px);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.7);
+    filter: blur(70px);
+  }
+  75% {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(1.35);
+    filter: blur(50px);
+  }
+  100% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(60px);
+  }
+}
+
+@keyframes flareGlow5 {
+  0% {
+    opacity: 0.18;
+    transform: translate(-50%, -50%) scale(0.95);
+    filter: blur(52px);
+  }
+  25% {
+    opacity: 0.58;
+    transform: translate(-50%, -50%) scale(1.28);
+    filter: blur(44px);
+  }
+  50% {
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(1.58);
+    filter: blur(64px);
+  }
+  75% {
+    opacity: 0.58;
+    transform: translate(-50%, -50%) scale(1.28);
+    filter: blur(44px);
+  }
+  100% {
+    opacity: 0.18;
+    transform: translate(-50%, -50%) scale(0.95);
+    filter: blur(52px);
+  }
+}
+
+/* Background flare container - always visible */
+.flare-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.flare {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Green flare (Accessible Green secondary) - Brighter */
+.flare-green {
+  background: radial-gradient(circle, rgba(43, 128, 0, 0.8) 0%, rgba(43, 128, 0, 0.2) 50%, rgba(43, 128, 0, 0) 100%);
+}
+
+/* Purple flare (Telus Purple primary) - Brighter */
+.flare-purple {
+  background: radial-gradient(circle, rgba(75, 40, 109, 0.7) 0%, rgba(75, 40, 109, 0.15) 50%, rgba(75, 40, 109, 0) 100%);
+}
+
+/* Cyan flare (accent) - Brighter */
+.flare-cyan {
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.7) 0%, rgba(34, 211, 238, 0.15) 50%, rgba(34, 211, 238, 0) 100%);
+}
+
+/* Blue flare (accent) - Brighter */
+.flare-blue {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.75) 0%, rgba(59, 130, 246, 0.18) 50%, rgba(59, 130, 246, 0) 100%);
+}
+
+/* Continuous infinite loop animations */
+.flare-1 {
+  animation: flareGlow1 8s ease-in-out infinite;
+}
+
+.flare-2 {
+  animation: flareGlow2 9s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.flare-3 {
+  animation: flareGlow3 10s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.flare-4 {
+  animation: flareGlow4 11s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.flare-5 {
+  animation: flareGlow5 12s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+
+.surface-container {
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
+.primary-text {
+  color: var(--color-primary);
+}
+
+.success-text {
+  color: var(--color-success);
+}
+
+.success-bg {
+  background-color: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.error-text {
+  color: var(--color-error);
+}
+
+.error-bg {
+  background-color: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+.warning-text {
+  color: var(--color-warning);
+}
+
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-xl { gap: var(--spacing-xl); }
+
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.m-xl { margin: var(--spacing-xl); }
