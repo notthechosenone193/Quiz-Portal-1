@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
 export async function createTambolaGame(title: string, hostName: string, winConditions: string[]) {
   const res = await fetch(`${API_BASE}/api/tambola/create`, {

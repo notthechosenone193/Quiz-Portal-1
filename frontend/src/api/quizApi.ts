@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
 export async function generateQuiz(topic: string, mcqCount: number, tfCount: number, timerSeconds: number, theme = '') {
   const res = await fetch(`${API_BASE}/api/quiz/generate`, {
