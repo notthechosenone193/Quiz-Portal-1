@@ -11,6 +11,9 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import TambolaSetupPage from './pages/TambolaSetupPage';
 import TambolaHostPage from './pages/TambolaHostPage';
 import TambolaGamePage from './pages/TambolaGamePage';
+import TambolaJoinPage from './pages/TambolaJoinPage';
+import QuizJoinPage from './pages/QuizJoinPage';
+import HistoryPage from './pages/HistoryPage';
 import QuizzesDetailPage from './pages/dashboard/QuizzesDetailPage';
 import ParticipantsDetailPage from './pages/dashboard/ParticipantsDetailPage';
 import TambolaGamesDetailPage from './pages/dashboard/TambolaGamesDetailPage';
@@ -59,6 +62,7 @@ function App() {
           <Route path="/" element={<Navigate to="/admin" />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/admin/create-quiz" element={<CreateQuizPage />} />
+          <Route path="/quiz/join" element={<QuizJoinPage />} />
           <Route path="/admin/preview/:quizId" element={<PreviewPage />} />
           <Route path="/quiz/:quizId/:sessionCode" element={<LiveQuizPage />} />
           <Route path="/admin/results/:quizId" element={<ResultsPage />} />
@@ -68,7 +72,9 @@ function App() {
           <Route path="/admin/dashboard/participants" element={<ParticipantsDetailPage />} />
           <Route path="/admin/dashboard/tambola-games" element={<TambolaGamesDetailPage />} />
           <Route path="/admin/dashboard/tambola-claims" element={<TambolaClaimsDetailPage />} />
+          <Route path="/admin/history" element={<HistoryPage />} />
           <Route path="/admin/tambola" element={<TambolaSetupPage />} />
+          <Route path="/tambola/join" element={<TambolaJoinPage />} />
           <Route path="/admin/tambola/:gameId/host" element={<TambolaHostPage />} />
           <Route path="/tambola/:gameId/:sessionCode" element={<TambolaGamePage />} />
         </Routes>

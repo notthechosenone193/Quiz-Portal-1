@@ -69,3 +69,24 @@ export async function getTambolaState(sessionCode: string) {
   if (!res.ok) throw new Error('Failed to fetch game state');
   return res.json();
 }
+
+export async function getTambolaSessionForGame(gameId: number) {
+  const res = await fetch(`${API_BASE}/api/tambola/${gameId}/session`);
+  if (!res.ok) throw new Error('Failed to fetch session');
+  return res.json();
+}
+
+export async function endTambolaGame(gameId: number) {
+  const res = await fetch(`${API_BASE}/api/tambola/${gameId}/end`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error((await res.json()).error || 'Failed to end session');
+  return res.json();
+}
+
+export async function resolveTambolaCode(code: string) {
+  const res = await fetch(`${API_BASE}/api/tambola/session/${code}/resolve`);
+  if (!res.ok) throw new Error((await res.json()).error || 'Game not found');
+  return res.json();
+}

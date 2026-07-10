@@ -26,6 +26,27 @@ export function createSessionRouter(io: SocketIOServer) {
     }
   });
 
+  // GET /api/session/:code — side-effect-free code lookup for the join gate
+  router.get('/session/:code', async (req, res) => {
+    try {
+      const sessionCode = req.params.code.toUpperCase();
+      const session = await getSessionByCode(sessionCode);
+      if (!session) {
+        res.status(404).json({ error: 'Quiz not found' });
+        return;
+      }
+      const quiz = await getQuiz(session.quiz_id);
+      if (!quiz) {
+        res.status(404).json({ error: 'Quiz not found' });
+        return;
+      }
+      res.json({ quizId: session.quiz_id, title: quiz.title, topic: quiz.topic });
+    } catch (error) {
+      console.error('Error resolving session code:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // Join a quiz session
   router.post('/session/:code/join', async (req, res) => {
     try {

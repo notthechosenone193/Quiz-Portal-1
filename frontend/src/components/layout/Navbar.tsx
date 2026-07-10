@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { BookOpen, Dices, LayoutDashboard, BarChart2, ChevronDown, User, Settings, LogOut, Menu, X } from 'lucide-react';
+import { BookOpen, Dices, LayoutDashboard, BarChart2, History, ChevronDown, User, Settings, LogOut, Menu, X } from 'lucide-react';
 import { useClickOutside } from '../../hooks/useClickOutside';
 
 export const Navbar = () => {
@@ -19,6 +19,7 @@ export const Navbar = () => {
     { id: 'quiz',      label: 'Quiz',       icon: BookOpen,        path: '/admin/create-quiz' },
     { id: 'tambola',   label: 'Tambola',    icon: Dices,           path: '/admin/tambola' },
     { id: 'dashboard', label: 'Dashboard',  icon: BarChart2,       path: '/admin/dashboard' },
+    { id: 'history',   label: 'History',    icon: History,         path: '/admin/history' },
   ];
 
   const isActive = (path: string) =>

@@ -65,6 +65,9 @@ export default function TambolaSetupPage() {
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold text-gray-900">Create Tambola Game</h1>
           <p className="text-gray-600">Set up a new game and start playing with Telus Digital</p>
+          <Button variant="text" onClick={() => navigate('/tambola/join')}>
+            Already have a code? Join a Game
+          </Button>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8 space-y-6">

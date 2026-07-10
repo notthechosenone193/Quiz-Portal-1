@@ -69,6 +69,9 @@ export default function CreateQuizPage() {
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">Create New Quiz</h1>
+          <Button variant="text" onClick={() => navigate('/quiz/join')}>
+            Already have a code? Join a Quiz
+          </Button>
         </div>
 
         {/* Main Card */}

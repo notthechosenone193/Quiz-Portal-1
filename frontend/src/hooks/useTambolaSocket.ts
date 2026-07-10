@@ -7,6 +7,7 @@ interface TambolaSocketCallbacks {
   onClaimSubmitted?: (payload: { claimId: number; participantName: string; claimType: ClaimType; valid: boolean }) => void;
   onClaimResult?: (payload: { claimId: number; claimType: ClaimType; participantName: string; verified: number }) => void;
   onParticipantJoined?: (payload: { participantName: string; ticketCount: number }) => void;
+  onSessionEnded?: (payload: { gameId: number }) => void;
 }
 
 export function useTambolaSocket(sessionCode: string | null, callbacks: TambolaSocketCallbacks) {
@@ -24,6 +25,7 @@ export function useTambolaSocket(sessionCode: string | null, callbacks: TambolaS
     const onClaimSubmitted = callbacks.onClaimSubmitted;
     const onClaimResult = callbacks.onClaimResult;
     const onParticipantJoined = callbacks.onParticipantJoined;
+    const onSessionEnded = callbacks.onSessionEnded;
 
     socket.on('connect', handleConnect);
     if (socket.connected) {
@@ -34,6 +36,7 @@ export function useTambolaSocket(sessionCode: string | null, callbacks: TambolaS
     if (onClaimSubmitted) socket.on('tambola-claim-submitted', onClaimSubmitted);
     if (onClaimResult) socket.on('tambola-claim-result', onClaimResult);
     if (onParticipantJoined) socket.on('tambola-participant-joined', onParticipantJoined);
+    if (onSessionEnded) socket.on('tambola-session-ended', onSessionEnded);
 
     return () => {
       socket.off('connect', handleConnect);
@@ -41,6 +44,7 @@ export function useTambolaSocket(sessionCode: string | null, callbacks: TambolaS
       if (onClaimSubmitted) socket.off('tambola-claim-submitted', onClaimSubmitted);
       if (onClaimResult) socket.off('tambola-claim-result', onClaimResult);
       if (onParticipantJoined) socket.off('tambola-participant-joined', onParticipantJoined);
+      if (onSessionEnded) socket.off('tambola-session-ended', onSessionEnded);
     };
   }, [sessionCode]);
 }

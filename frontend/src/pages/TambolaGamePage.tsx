@@ -23,7 +23,7 @@ type Grid = (number | null)[][];
 export default function TambolaGamePage() {
   const { sessionCode } = useParams<{ gameId: string; sessionCode: string }>();
 
-  const [phase, setPhase] = useState<'joining' | 'playing' | 'finished'>('joining');
+  const [phase, setPhase] = useState<'joining' | 'playing' | 'finished' | 'ended'>('joining');
   const [name, setName] = useState('');
   const [ticketId, setTicketId] = useState<number | null>(null);
   const [grid, setGrid] = useState<Grid | null>(null);
@@ -94,6 +94,9 @@ export default function TambolaGamePage() {
   useTambolaSocket(sessionCode ?? null, {
     onNumberDrawn: (payload) => {
       setDrawnNumbers(payload.drawnNumbers);
+    },
+    onSessionEnded: () => {
+      setPhase('ended');
     },
   });
 
@@ -190,6 +193,17 @@ export default function TambolaGamePage() {
           <div className="text-6xl">🎉</div>
           <h1 className="text-3xl font-bold text-gray-900">Game Complete!</h1>
           <p className="text-gray-600">Thank you for playing Tambola with Telus Digital</p>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (phase === 'ended') {
+    return (
+      <PageWrapper>
+        <div className="max-w-md mx-auto text-center space-y-4">
+          <h1 className="text-3xl font-bold text-gray-900">This game has ended</h1>
+          <p className="text-gray-600">The host closed this session. Thanks for playing.</p>
         </div>
       </PageWrapper>
     );

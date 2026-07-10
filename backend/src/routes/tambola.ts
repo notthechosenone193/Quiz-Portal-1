@@ -7,6 +7,9 @@ import {
   createTambolaSession,
   getTambolaSessionByCode,
   getTambolaSessionById,
+  getLatestTambolaSession,
+  getTambolaSessionState,
+  endTambolaGame,
   createTambolaTicket,
   getTicketsBySession,
   getTicketById,
@@ -15,7 +18,6 @@ import {
   saveClaim,
   verifyClaim,
   getClaim,
-  getClaims,
 } from '../db.js';
 import { generateTicket, validateClaim, ClaimType } from '../services/tambolaService.js';
 
@@ -62,6 +64,81 @@ export function createTambolaRouter(io: SocketIOServer) {
     }
   });
 
+  // GET /api/tambola/:gameId/session — resume the current session for a game, if any
+  router.get('/:gameId/session', async (req, res) => {
+    try {
+      const gameId = parseId(req.params.gameId);
+      if (!gameId) { res.status(400).json({ error: 'Invalid game ID' }); return; }
+      const game = await getTambolaGame(gameId);
+      if (!game) {
+        res.status(404).json({ error: 'Game not found' });
+        return;
+      }
+      const session = await getLatestTambolaSession(gameId);
+      if (!session) {
+        res.json({ session: null });
+        return;
+      }
+      const shareUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/tambola/${gameId}/${session.session_code}`;
+      const state = await getTambolaSessionState(session.id);
+      res.json({
+        session: {
+          sessionCode: session.session_code,
+          shareUrl,
+          isActive: game.is_active === 1,
+          ...state,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // POST /api/tambola/:gameId/end — permanently end a game's session
+  router.post('/:gameId/end', async (req, res) => {
+    try {
+      const gameId = parseId(req.params.gameId);
+      if (!gameId) { res.status(400).json({ error: 'Invalid game ID' }); return; }
+      const game = await getTambolaGame(gameId);
+      if (!game) {
+        res.status(404).json({ error: 'Game not found' });
+        return;
+      }
+      if (game.is_active === 0) {
+        res.status(400).json({ error: 'Game has already ended' });
+        return;
+      }
+      await endTambolaGame(gameId);
+      const session = await getLatestTambolaSession(gameId);
+      if (session) {
+        io.to('TAMBOLA_' + session.session_code).emit('tambola-session-ended', { gameId });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // GET /api/tambola/session/:code/resolve — side-effect-free code lookup for the join gate
+  router.get('/session/:code/resolve', async (req, res) => {
+    try {
+      const sessionCode = req.params.code.toUpperCase();
+      const session = await getTambolaSessionByCode(sessionCode);
+      if (!session) {
+        res.status(404).json({ error: 'Game not found' });
+        return;
+      }
+      const game = await getTambolaGame(session.game_id);
+      if (!game) {
+        res.status(404).json({ error: 'Game not found' });
+        return;
+      }
+      res.json({ gameId: game.id, title: game.title, isActive: game.is_active === 1 });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // POST /api/tambola/:gameId/session
   router.post('/:gameId/session', async (req, res) => {
     try {
@@ -95,6 +172,11 @@ export function createTambolaRouter(io: SocketIOServer) {
         res.status(404).json({ error: 'Session not found' });
         return;
       }
+      const game = await getTambolaGame(session.game_id);
+      if (!game || game.is_active === 0) {
+        res.status(403).json({ error: 'This game has ended' });
+        return;
+      }
       const grid = generateTicket();
       const ticket = await createTambolaTicket(session.id, name, grid);
       const drawnNumbers = await getDrawnNumbers(session.id);
@@ -116,6 +198,11 @@ export function createTambolaRouter(io: SocketIOServer) {
       const session = await getTambolaSessionByCode(sessionCode);
       if (!session) {
         res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      const game = await getTambolaGame(session.game_id);
+      if (!game || game.is_active === 0) {
+        res.status(403).json({ error: 'This game has ended' });
         return;
       }
       const drawn = await getDrawnNumbers(session.id);
@@ -151,6 +238,11 @@ export function createTambolaRouter(io: SocketIOServer) {
       const session = await getTambolaSessionByCode(sessionCode);
       if (!session) {
         res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      const game = await getTambolaGame(session.game_id);
+      if (!game || game.is_active === 0) {
+        res.status(403).json({ error: 'This game has ended' });
         return;
       }
       const ticket = await getTicketById(ticketId);
@@ -223,10 +315,8 @@ export function createTambolaRouter(io: SocketIOServer) {
         res.status(404).json({ error: 'Session not found' });
         return;
       }
-      const drawnNumbers = await getDrawnNumbers(session.id);
-      const tickets = await getTicketsBySession(session.id);
-      const claims = await getClaims(session.id);
-      res.json({ drawnNumbers, ticketCount: tickets.length, claims });
+      const state = await getTambolaSessionState(session.id);
+      res.json(state);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }

@@ -106,6 +106,12 @@ export async function startQuestion(sessionCode: string, participantId: number, 
   return res.json();
 }
 
+export async function resolveQuizCode(code: string) {
+  const res = await fetch(`${API_BASE}/api/session/${code}`);
+  if (!res.ok) throw new Error((await res.json()).error || 'Quiz not found');
+  return res.json();
+}
+
 export async function getActiveSession(quizId: number) {
   const res = await fetch(`${API_BASE}/api/quiz/${quizId}/active-session`);
 

@@ -5,13 +5,16 @@ import { Button } from '../components/ui/Button';
 import { Toast } from '../components/ui/Toast';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { ConnectionStatus } from '../components/ui/ConnectionStatus';
+import { ConfirmDialog } from '../components/ui/Modal';
 import { Copy, Check } from 'lucide-react';
 import {
   getTambolaGame,
+  getTambolaSessionForGame,
   createTambolaSession,
   drawTambolaNumber,
   verifyTambolaClaim,
   getTambolaState,
+  endTambolaGame,
 } from '../api/tambolaApi';
 import { useTambolaSocket } from '../hooks/useTambolaSocket';
 import { getSocket } from '../api/socketClient';
@@ -34,12 +37,27 @@ export default function TambolaHostPage() {
   const [copied, setCopied] = useState(false);
   const [autoDrawEnabled, setAutoDrawEnabled] = useState(false);
   const [autoDrawCountdown, setAutoDrawCountdown] = useState(30);
+  const [isEnded, setIsEnded] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
   useEffect(() => {
     const loadGame = async () => {
       try {
-        const data = await getTambolaGame(parseInt(gameId!));
-        setGame(data);
+        const [gameData, sessionData] = await Promise.all([
+          getTambolaGame(parseInt(gameId!)),
+          getTambolaSessionForGame(parseInt(gameId!)),
+        ]);
+        setGame(gameData);
+        if (sessionData.session) {
+          const s = sessionData.session;
+          setSessionCode(s.sessionCode);
+          setShareUrl(s.shareUrl);
+          setDrawnNumbers(s.drawnNumbers);
+          setTicketCount(s.ticketCount);
+          setClaims(s.claims);
+          setIsEnded(!s.isActive);
+        }
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -49,6 +67,19 @@ export default function TambolaHostPage() {
 
     loadGame();
   }, [gameId]);
+
+  const handleEndSession = async () => {
+    setIsEnding(true);
+    try {
+      await endTambolaGame(parseInt(gameId!));
+      setIsEnded(true);
+      setShowEndConfirm(false);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsEnding(false);
+    }
+  };
 
   const handleStartSession = async () => {
     setIsLoading(true);
@@ -123,6 +154,9 @@ export default function TambolaHostPage() {
         prev.map((c) => (c.id === payload.claimId ? { ...c, verified: payload.verified } : c))
       );
     },
+    onSessionEnded: () => {
+      setIsEnded(true);
+    },
   });
 
   // Auto-draw timer: 30-second countdown that auto-draws a number.
@@ -160,6 +194,7 @@ export default function TambolaHostPage() {
       try {
         const state = await getTambolaState(sessionCode);
         setTicketCount(state.ticketCount);
+        setClaims(state.claims);
         if (state.drawnNumbers.length > drawnNumbers.length) {
           setDrawnNumbers(state.drawnNumbers);
         }
@@ -184,16 +219,52 @@ export default function TambolaHostPage() {
         <div className="md:col-span-2 space-y-6">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-3">
-              <h1 className="text-3xl font-bold text-gray-900">{game.title}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-gray-900">{game.title}</h1>
+                {isEnded && (
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: '#F7F7F8', color: '#71757B' }}
+                  >
+                    Ended
+                  </span>
+                )}
+              </div>
               {game.host_name && <p className="text-gray-600">Hosted by {game.host_name}</p>}
             </div>
-            {sessionCode && <ConnectionStatus socket={getSocket()} />}
+            {sessionCode && !isEnded && <ConnectionStatus socket={getSocket()} />}
           </div>
 
           {!sessionCode ? (
             <Button onClick={handleStartSession} isLoading={isLoading} className="w-full">
               Start Session
             </Button>
+          ) : isEnded ? (
+            <>
+              <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
+                <p className="text-sm text-gray-600">Participants Joined</p>
+                <p className="text-3xl font-bold text-blue-600">{ticketCount}</p>
+              </div>
+
+              {/* Final numbers grid */}
+              <div className="bg-white rounded-lg shadow-md p-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Final Numbers Called ({drawnNumbers.length}/99)</h2>
+                <div className="grid grid-cols-9 sm:grid-cols-11 gap-0.5 sm:gap-1">
+                  {Array.from({ length: 99 }, (_, i) => i + 1).map((num) => (
+                    <div
+                      key={num}
+                      className={`aspect-square w-full min-w-[24px] flex items-center justify-center text-[10px] sm:text-xs font-bold rounded ${
+                        drawnNumbers.includes(num)
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-100 text-gray-400'
+                      }`}
+                    >
+                      {num}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           ) : (
             <>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
@@ -320,6 +391,14 @@ export default function TambolaHostPage() {
                   Draw Number Manually
                 </Button>
               </div>
+
+              <Button
+                onClick={() => setShowEndConfirm(true)}
+                variant="danger"
+                className="w-full"
+              >
+                End Session
+              </Button>
             </>
           )}
         </div>
@@ -351,7 +430,7 @@ export default function TambolaHostPage() {
                         {claim.verified === null ? 'PENDING' : claim.verified === 1 ? 'VALID' : 'REJECTED'}
                       </span>
                     </div>
-                    {claim.verified === null && (
+                    {!isEnded && claim.verified === null && (
                       <div className="flex gap-2">
                         <Button
                           onClick={() => handleVerifyClaim(claim.id, true)}
@@ -383,6 +462,17 @@ export default function TambolaHostPage() {
 
       {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
       {success && <Toast message={success} type="success" onClose={() => setSuccess(null)} />}
+
+      <ConfirmDialog
+        isOpen={showEndConfirm}
+        onConfirm={handleEndSession}
+        onCancel={() => setShowEndConfirm(false)}
+        title="End this session?"
+        message="This closes the game for everyone and can't be undone. Anyone still playing will see it as ended."
+        confirmLabel="End Session"
+        isDestructive
+        isLoading={isEnding}
+      />
     </PageWrapper>
   );
 }

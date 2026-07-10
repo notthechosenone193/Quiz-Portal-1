@@ -223,6 +223,21 @@ export async function getTambolaSessionById(session_id: number) {
   return getPrisma().tambolaSession.findUnique({ where: { id: session_id } });
 }
 
+export async function getLatestTambolaSession(game_id: number) {
+  return getPrisma().tambolaSession.findFirst({ where: { game_id }, orderBy: { id: 'desc' } });
+}
+
+export async function getTambolaSessionState(session_id: number) {
+  const drawnNumbers = await getDrawnNumbers(session_id);
+  const tickets = await getTicketsBySession(session_id);
+  const claims = await getClaims(session_id);
+  return { drawnNumbers, ticketCount: tickets.length, claims };
+}
+
+export async function endTambolaGame(game_id: number) {
+  await getPrisma().tambolaGame.update({ where: { id: game_id }, data: { is_active: 0 } });
+}
+
 export async function createTambolaTicket(session_id: number, participant_name: string, grid: (number | null)[][]) {
   const result = await getPrisma().tambolaTicket.create({
     data: { session_id, participant_name, grid: JSON.stringify(grid) },
