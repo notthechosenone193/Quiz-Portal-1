@@ -7,72 +7,56 @@ router.get('/', async (_req, res) => {
   try {
     const p = getPrisma();
 
-    const [
-      totalQuizzes,
-      totalQuestions,
-      totalSessions,
-      totalParticipants,
-      totalAnswers,
-      recentQuizzes,
-      topQuizzes,
-      avgScoreRaw,
-      // Tambola
-      totalTambolaGames,
-      totalTambolaSessions,
-      totalTickets,
-      totalClaims,
-      verifiedWins,
-      topClaimRaw,
-      recentTambolaGames,
-    ] = await Promise.all([
-      p.quiz.count(),
-      p.question.count(),
-      p.quizSession.count(),
-      p.participant.count(),
-      p.answer.count(),
+    // Run sequentially rather than via Promise.all — the embedded PGlite dev
+    // database becomes unreliable ("Connection terminated unexpectedly") under
+    // this many truly concurrent queries.
+    const totalQuizzes = await p.quiz.count();
+    const totalQuestions = await p.question.count();
+    const totalSessions = await p.quizSession.count();
+    const totalParticipants = await p.participant.count();
+    const totalAnswers = await p.answer.count();
 
-      p.quiz.findMany({
-        orderBy: { id: 'desc' },
-        take: 5,
-        select: { id: true, title: true, topic: true, is_published: true },
-      }),
+    const recentQuizzes = await p.quiz.findMany({
+      orderBy: { id: 'desc' },
+      take: 5,
+      select: { id: true, title: true, topic: true, is_published: true },
+    });
 
-      p.$queryRaw<{ quiz_id: number; title: string; participants: bigint }[]>`
-        SELECT qs.quiz_id, qz.title, COUNT(p.id) AS participants
-        FROM quiz_sessions qs
-        JOIN quizzes qz ON qz.id = qs.quiz_id
-        JOIN participants p ON p.session_id = qs.id
-        GROUP BY qs.quiz_id, qz.title
-        ORDER BY participants DESC
-        LIMIT 5
-      `,
+    const topQuizzes = await p.$queryRaw<{ quiz_id: number; title: string; participants: bigint }[]>`
+      SELECT qs.quiz_id, qz.title, COUNT(p.id) AS participants
+      FROM quiz_sessions qs
+      JOIN quizzes qz ON qz.id = qs.quiz_id
+      JOIN participants p ON p.session_id = qs.id
+      GROUP BY qs.quiz_id, qz.title
+      ORDER BY participants DESC
+      LIMIT 5
+    `;
 
-      p.$queryRaw<{ avg_correct: number }[]>`
-        SELECT ROUND(AVG(CASE WHEN is_correct = 1 THEN 100.0 ELSE 0 END), 1) AS avg_correct
-        FROM answers
-      `,
+    const avgScoreRaw = await p.$queryRaw<{ avg_correct: number }[]>`
+      SELECT ROUND(AVG(CASE WHEN is_correct = 1 THEN 100.0 ELSE 0 END), 1) AS avg_correct
+      FROM answers
+    `;
 
-      // Tambola queries
-      p.tambolaGame.count(),
-      p.tambolaSession.count(),
-      p.tambolaTicket.count(),
-      p.tambolaClaim.count(),
-      p.tambolaClaim.count({ where: { verified: 1 } }),
+    // Tambola queries
+    const totalTambolaGames = await p.tambolaGame.count();
+    const totalTambolaSessions = await p.tambolaSession.count();
+    const totalTickets = await p.tambolaTicket.count();
+    const totalClaims = await p.tambolaClaim.count();
+    const verifiedWins = await p.tambolaClaim.count({ where: { verified: 1 } });
 
-      p.$queryRaw<{ claim_type: string; count: bigint }[]>`
-        SELECT claim_type, COUNT(*) as count
-        FROM tambola_claims
-        GROUP BY claim_type
-        ORDER BY count DESC
-        LIMIT 1
-      `,
+    const topClaimRaw = await p.$queryRaw<{ claim_type: string; count: bigint }[]>`
+      SELECT claim_type, COUNT(*) as count
+      FROM tambola_claims
+      GROUP BY claim_type
+      ORDER BY count DESC
+      LIMIT 1
+    `;
 
-      p.tambolaGame.findMany({
-        orderBy: { id: 'desc' },
-        take: 5,
-        select: { id: true, title: true, host_name: true, is_active: true },
-      }),
-    ]);
+    const recentTambolaGames = await p.tambolaGame.findMany({
+      orderBy: { id: 'desc' },
+      take: 5,
+      select: { id: true, title: true, host_name: true, is_active: true },
+    });
 
     const avgScore = avgScoreRaw[0]?.avg_correct ?? 0;
     const topClaimType = topClaimRaw[0]?.claim_type ?? null;
